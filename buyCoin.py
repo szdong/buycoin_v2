@@ -5,11 +5,17 @@ import json
 import time
 
 
+class Exchange:
+    binance = "Binance"
+    ftx = "FTX"
+
+
 class AccountInfo:
     def __init__(self, api_key: str, api_secret: str, line_notify_key: str, initial_balance: float, order_size: float,
-                 digit: int):
+                 digit: int, sub_account: str = None):
         self.api_key = api_key
         self.api_secret = api_secret
+        self.sub_account = sub_account
         self.line_notify_key = line_notify_key
 
         # Total amount invested to date (USD or USDT or USDC).
@@ -23,11 +29,24 @@ class AccountInfo:
 
 
 class BuyCoin:
-    def __init__(self, account_info: AccountInfo, target_coin: str, quote_coin: str):
-        self.exchange = ccxt.binance({
-            'apiKey': account_info.api_key,
-            'secret': account_info.api_secret,
-        })
+    def __init__(self, account_info: AccountInfo, target_coin: str, quote_coin: str, exchange: str):
+        if exchange == "Binance":
+            self.exchange = ccxt.binance({
+                'apiKey': account_info.api_key,
+                'secret': account_info.api_secret,
+            })
+        elif exchange == "FTX":
+            ccxt_info = {
+                'apiKey': account_info.api_key,
+                'secret': account_info.api_secret,
+            }
+            if account_info.sub_account is not None:
+                ccxt_info["headers"] = {
+                    'FTX-SUBACCOUNT': account_info.sub_account,
+                }
+            self.exchange = ccxt.ftx(ccxt_info)
+        else:
+            raise ValueError("Unsupported exchange. Please use Binance or FTX.")
 
         self.account_info = account_info
         self.symbol = f"{target_coin}/{quote_coin}"

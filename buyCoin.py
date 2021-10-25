@@ -11,7 +11,8 @@ class Exchange:
 
 
 class AccountInfo:
-    def __init__(self, api_key: str, api_secret: str, line_notify_key: str, initial_balance: float, order_size: float,
+    def __init__(self, api_key: str, api_secret: str, line_notify_key: str, initial_quote_balance: float,
+                 initial_target_balance: float, order_size: float,
                  digit: int, sub_account: str = None):
         self.api_key = api_key
         self.api_secret = api_secret
@@ -19,7 +20,8 @@ class AccountInfo:
         self.line_notify_key = line_notify_key
 
         # Total amount invested to date (USD or USDT or USDC).
-        self.initial_balance = initial_balance
+        self.initial_quote_balance = initial_quote_balance
+        self.initial_target_balance = initial_target_balance
 
         # Amount of money you want to invest every day from next day (USD or USDT or USDC).
         self.order_size = order_size
@@ -80,17 +82,20 @@ class BuyCoin:
             coin_balance = self.exchange.fetch_balance()[self.target_coin]["free"]
             print(json.dumps(self.exchange.fetch_balance(), indent=4))
 
-            avg_cost = round((self.account_info.initial_balance - quote_balance) / coin_balance, 3)
-            roe = (quote_balance + coin_balance * coin_price - self.account_info.initial_balance) * 100
-            roe /= (self.account_info.initial_balance - quote_balance)
-            Estimated_Value = quote_balance + coin_balance * coin_price
+            effective_quote_balance = self.account_info.initial_quote_balance - quote_balance
+            effective_target_balance = coin_balance + self.account_info.initial_target_balance
+
+            avg_cost = round(effective_quote_balance / effective_target_balance, 3)
+            roe = (effective_target_balance * coin_price - effective_quote_balance) * 100
+            roe /= effective_quote_balance
+            estimated_value = quote_balance + effective_target_balance * coin_price
 
             text = f"{self.symbol}: {coin_price}\n\n"
             text += f"[Balance] \n"
             text += f"{self.quote_coin}: {round(quote_balance, 2)}\n"
-            text += f"{self.target_coin}: {round(coin_balance, self.account_info.digit)}\n"
+            text += f"{self.target_coin}: {round(effective_target_balance, self.account_info.digit)}\n"
             text += f"Avg: {avg_cost}\n\n"
-            text += f"Estimated Value: {round(Estimated_Value, 3)}\n"
+            text += f"Estimated Value: {round(estimated_value, 3)}\n"
             text += f"ROE: {round(roe, 3)}%"
 
             self.line_notify(message=text)

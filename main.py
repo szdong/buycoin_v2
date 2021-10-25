@@ -7,7 +7,8 @@ def lambda_handler(event, context):
         api_secret="YOUR_API_KEY",
         # sub_account="YOUR_SUB_ACCOUNT",  # Default is None
         line_notify_key="YOUR_LINE_NOTIFY_API_KEY",
-        initial_balance=1000,
+        initial_quote_balance=1000,
+        initial_target_balance=0.2,
         order_size=10,
         digit=4  # ETH/USDT (Binance)
         # https://www.binance.com/en/trade-rule
